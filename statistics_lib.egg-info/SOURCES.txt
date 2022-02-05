@@ -1,0 +1,9 @@
+README.md
+setup.py
+statistics_lib/__init__.py
+statistics_lib/multivariate_normal.py
+statistics_lib/visualize.py
+statistics_lib.egg-info/PKG-INFO
+statistics_lib.egg-info/SOURCES.txt
+statistics_lib.egg-info/dependency_links.txt
+statistics_lib.egg-info/top_level.txt
