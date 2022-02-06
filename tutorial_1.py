@@ -29,7 +29,7 @@ import matplotlib.animation as animation
 def animate_3Dplot(figure, start_angle, stop_angle, output_name):
     print('Animating '+output_name+'.gif')
     rot_animation = animation.FuncAnimation(figure, rotate, frames=np.arange(start_angle, stop_angle, 5), interval=250)
-    rot_animation.save(output_name+'.gif', dpi=40, writer='imagemagick')
+    rot_animation.save(output_name+'.gif', dpi=60, writer='imagemagick')
 
 #%%############################################################################
 ############################## SCRIPT VARIABLES ###############################
