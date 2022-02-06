@@ -16,6 +16,21 @@ cm_0 = cm.get_cmap('viridis')
 cm_1 = cm.get_cmap('plasma')
 
 
+
+#%%############################################################################
+################################## ANIMATE ####################################
+###############################################################################
+animate = True
+
+def rotate(angle):
+    ax.view_init(azim=angle)
+
+import matplotlib.animation as animation
+def animate_3Dplot(figure, start_angle, stop_angle, output_name):
+    print('Animating '+output_name+'.gif')
+    rot_animation = animation.FuncAnimation(figure, rotate, frames=np.arange(start_angle, stop_angle, 5), interval=250)
+    rot_animation.save(output_name+'.gif', dpi=40, writer='imagemagick')
+
 #%%############################################################################
 ############################## SCRIPT VARIABLES ###############################
 ###############################################################################
@@ -85,6 +100,8 @@ ax.set_zlim(-1, num_steps+1)
 ax.set_title('Normal distribution')
 ax.legend(legend_proxy, [proxy.get_label() for proxy in legend_proxy], bbox_to_anchor=(1.5, 1.1))
 
+if(animate):
+    animate_3Dplot(figure, 0, 90, 'normal_distr')
 #%%############################################################################
 ######################## PLOTTING NORMAL SKEWED DISTR #########################
 ###############################################################################
@@ -132,6 +149,9 @@ ax.set_zlim(-1, num_steps+1)
 ax.set_title('Normal skewed distribution')
 ax.legend(legend_proxy, [proxy.get_label() for proxy in legend_proxy], bbox_to_anchor=(1.5, 1.1))
 
+if(animate):
+    animate_3Dplot(figure, 0, 90, 'skew_distr')
+    
 #%%############################################################################
 ################# PLOTTING NORMAL SKEWED DISTR WITH 2 CHNAGES #################
 ###############################################################################
@@ -192,4 +212,7 @@ ax.set_zlabel('Z')
 ax.set_zlim(-1, num_steps+1)
 ax.set_title('Normal skewed distribution with ')
 ax.legend(legend_proxy, [proxy.get_label() for proxy in legend_proxy], bbox_to_anchor=(1.5, 1.1))
+
+if(animate):
+    animate_3Dplot(figure, 0, 90, 'normal_skew_distr')
 

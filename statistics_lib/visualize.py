@@ -3,33 +3,6 @@
 import numpy as np
 
 
-# def scatter_hist(x, y, ax, ax_histx, ax_histy, ax_settings, histx_settings, histy_settings, label):
-#     # no labels
-#     ax_histx.tick_params(axis="x", labelbottom=False)
-#     ax_histy.tick_params(axis="y", labelleft=False)
-
-#     # the scatter plot:
-#     ax.scatter(x, y, label=label, marker=ax_settings['marker'], c=ax_settings['color'], cmap=ax_settings['colormap'], alpha=ax_settings['alpha'], s=ax_settings['markersize'])
-#     #, facecolors=ax_settings['markerfacecolor'], edgecolors=ax_settings['markeredgecolor'], s=ax_settings['markersize'], alpha=ax_settings['alpha'])
-#     ax.set_xlim(ax_settings['xlim'])
-#     ax.set_ylim(ax_settings['ylim'])
-#     ax.legend()
-#     ax.grid('on', alpha=0.35, color='black', linestyle=':', linewidth=0.5)
-
-#     # now determine nice limits by hand:
-#     binwidth = np.abs( (histx_settings['xlim'][1] - histx_settings['xlim'][0] ) /101 )
-#     xymax = max(np.max(np.abs(x)), np.max(np.abs(y)))
-#     lim = (int(xymax/binwidth) + 1) * binwidth
-
-#     bins = np.arange(-lim, lim + binwidth, binwidth)
-#     ax_histx.hist(x, bins=bins, weights=np.ones_like(x)*histx_settings['weight'], color=histx_settings['color'], lw=0, alpha=histx_settings['alpha']) # ,density=histx_settings['density']
-#     ax_histx.set_xlim(histx_settings['xlim'])
-#     ax_histy.hist(y, bins=bins, weights=np.ones_like(y)*histy_settings['weight'], color=histy_settings['color'], lw=0, alpha=histx_settings['alpha'], orientation='horizontal') # , density=histy_settings['density']
-#     ax_histy.set_ylim(histy_settings['ylim'])
-    
-#     ax_histx.xaxis.grid('on', alpha=0.35, color='black', linestyle=':', linewidth=0.5)
-#     ax_histy.yaxis.grid('on', alpha=0.35, color='black', linestyle=':', linewidth=0.5)
-
 
 def scatter_hist(x, y, ax, ax_histx, ax_histy, ax_settings=None, histx_settings=None, histy_settings=None, label=''):
     """
