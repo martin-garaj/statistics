@@ -8,10 +8,10 @@ Package enclosing common functions related to statistics, which are not directly
 Tutorial 1 illustrates the implementaiton of Normal (Gaussian) distributon. The distribution function is implemented through *einstein notation*.
 
 #### Illustration of Normal distribution with varying covariance
-![](normal_distr.gif)
+![](graphics/normal_distr.gif)
 
 #### Illustration of Normal distribution with skewness
-![](skew_distr.gif)
+![](graphics/skew_distr.gif)
 
 #### Illustration of Normal distribution with varying covariance and skewness
-![](normal_skew_distr.gif)
+![](graphics/normal_skew_distr.gif)

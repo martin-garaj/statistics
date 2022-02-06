@@ -210,7 +210,7 @@ ax.set_ylabel('Y')
 ax.set_ylim(mu[1]-radius, mu[1]+radius)
 ax.set_zlabel('Z')
 ax.set_zlim(-1, num_steps+1)
-ax.set_title('Normal skewed distribution with ')
+ax.set_title('Normal skewed distribution with varying covariance')
 ax.legend(legend_proxy, [proxy.get_label() for proxy in legend_proxy], bbox_to_anchor=(1.5, 1.1))
 
 if(animate):
