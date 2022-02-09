@@ -1,7 +1,24 @@
 # -*- coding: utf-8 -*-
+"""
+Tutorial 1 
 
+This tutorial illustrates the basic properties of normal distribution with 
+varying covariance among the variables. The normal distribution is then 
+enhanced to include skewness. Lastly, both the covariance and the skewness
+parameters are varied to see the difference.
 
+Every plot highlights the oriantation of eigen-vectors and if the distribution
+is skewed, then the skewness vector is highlighted as well.
+"""
+
+#%%############################################################################
+################################### IMPORTS ###################################
+###############################################################################
+# import the statistics_lib package that includes the implementation of 
+# the distributions
 import statistics_lib as st
+
+# import other necessary packages
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -9,18 +26,21 @@ from matplotlib import cm
 #%%############################################################################
 ################################# USER INPUTS #################################
 ###############################################################################
+# radius ~> xlim and ylim
 radius = 3
+# select number of steps in between the first and final plot
 num_steps = 7
 
+# select colormaps
 cm_0 = cm.get_cmap('viridis')
 cm_1 = cm.get_cmap('plasma')
 
-
+# if True, then the results are saved as gifs (takes a while so requires patience)
+animate = True 
 
 #%%############################################################################
 ################################## ANIMATE ####################################
 ###############################################################################
-animate = True
 
 def rotate(angle):
     ax.view_init(azim=angle)
@@ -101,13 +121,14 @@ ax.set_title('Normal distribution')
 ax.legend(legend_proxy, [proxy.get_label() for proxy in legend_proxy], bbox_to_anchor=(1.5, 1.1))
 
 if(animate):
-    animate_3Dplot(figure, 0, 90, 'normal_distr')
+    animate_3Dplot(figure, 0, 90, './graphics/tutorial_1_normal_distr')
 #%%############################################################################
 ######################## PLOTTING NORMAL SKEWED DISTR #########################
 ###############################################################################
 # plot normal skewed distribution
 figure = plt.figure(1)
 figure.set_size_inches(13.5, 8.5)
+
 ax = figure.add_subplot(projection='3d', proj_type = 'ortho') 
 legend_proxy = []
 for idx_step, skew in enumerate(np.linspace(-2, 2, num_steps)):
@@ -117,8 +138,9 @@ for idx_step, skew in enumerate(np.linspace(-2, 2, num_steps)):
     color_0 = cm_0(0.1 + 0.8*((idx_step+1)/(num_steps)) )
     color_2 = cm_0(0.9 - 0.8*((idx_step+1)/(num_steps)) )
 
-    Z_normal = st.multivariate_gaussian_skew(contour, mu, Sigma, np.array([skew, 0]))
-    peak = st.multivariate_gaussian(mu, mu, Sigma)
+    data = np.array( [X_contour.flatten(), Y_contour.flatten()] ).transpose()
+    Z_normal = st.multivariate_gaussian_skew(data, mu, Sigma, np.array([skew, 0])).reshape(X_contour.shape[0], -1).T
+    peak = Z_normal.max()
     ax.contour(  X_contour, Y_contour, Z_normal, 
                     [peak*0.1, peak*0.5, peak*0.99],
                     zdir='z', 
@@ -150,7 +172,7 @@ ax.set_title('Normal skewed distribution')
 ax.legend(legend_proxy, [proxy.get_label() for proxy in legend_proxy], bbox_to_anchor=(1.5, 1.1))
 
 if(animate):
-    animate_3Dplot(figure, 0, 90, 'skew_distr')
+    animate_3Dplot(figure, 0, 90, './graphics/tutorial_1_skew_distr')
     
 #%%############################################################################
 ################# PLOTTING NORMAL SKEWED DISTR WITH 2 CHNAGES #################
@@ -169,9 +191,9 @@ for idx_step, (skew, cov) in enumerate( zip(np.linspace(-2, 2, num_steps), np.li
     color_1 = cm_1(0.9 - 0.8*((idx_step+1)/(num_steps)) )
     color_2 = cm_0(0.9 - 0.8*((idx_step+1)/(num_steps)) )
 
-
-    Z_normal = st.multivariate_gaussian_skew(contour, mu, Sigma, np.array([skew, 0]))
-    peak = st.multivariate_gaussian(mu, mu, Sigma)
+    data = np.array( [X_contour.flatten(), Y_contour.flatten()] ).transpose()
+    Z_normal = st.multivariate_gaussian_skew(data, mu, Sigma, np.array([skew, 0])).reshape(X_contour.shape[0], -1).T
+    peak = Z_normal.max()
     ax.contour(  X_contour, Y_contour, Z_normal, 
                     [peak*0.1, peak*0.5, peak*0.99],
                     zdir='z', 
@@ -214,5 +236,5 @@ ax.set_title('Normal skewed distribution with varying covariance')
 ax.legend(legend_proxy, [proxy.get_label() for proxy in legend_proxy], bbox_to_anchor=(1.5, 1.1))
 
 if(animate):
-    animate_3Dplot(figure, 0, 90, 'normal_skew_distr')
+    animate_3Dplot(figure, 0, 90, './graphics/tutorial_1_normal_skew_distr')
 
