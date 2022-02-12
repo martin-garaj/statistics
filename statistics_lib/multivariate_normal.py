@@ -3,7 +3,7 @@
 
 import numpy as np
 from scipy.stats import norm
-from   scipy.stats import multivariate_normal
+from scipy.stats import multivariate_normal
 
 def multivariate_gaussian(point, mu, Sigma):
     """
@@ -102,3 +102,60 @@ def multivariate_gaussian_skew(point, mean, Cov, shape):
     
     return probability
     
+
+
+
+class multivariate_normal_skew:
+    
+    def __init__(self, mean, Cov, shape):
+        # get the dimension
+        self._dim = len(mean)
+        
+        # check & assert proper form of inputs
+        if(Cov.shape != (self._dim, self._dim)):
+            raise ValueError('dim(mean)='+str(self.dim)+', but the dim(Cov)=('+str(Cov.shape[0])+', '+str(Cov.shape[1])+') instead.')
+        else:
+            self._Psi  = Cov
+        # assert proper dimensions (scipy expect 1-dimensional vectors)
+        self._lamb = shape.reshape(self._dim,)
+        self._mu   = mean.reshape(self._dim,)
+        
+        # calculate internal parameters
+        self.delta = self._lamb / np.sqrt(1+(self._lamb**2))
+        self.Delta = np.diagflat( np.sqrt( 1-(self.delta**2) ) )
+        self.Omega = self.Delta @ (self._Psi + np.outer(self._lamb, self.lamb.transpose())) @ self.Delta
+        self.alpha = (self._lamb.transpose() @ np.linalg.inv(self._Psi) @ np.linalg.inv(self.Delta) ) \
+            / np.sqrt( 1 + (self._lamb.transpose() @ np.linalg.inv(self._Psi) @ self._lamb ) )
+        
+        
+    def pdf(self, x):
+        return np.exp( self.logpdf(x) )
+
+
+    def logpdf(self, x):
+        # check dimension of x
+        if(len(x.shape)==1):
+            data = x.reshape(-1,self. _dim)
+        elif(x.shape[1]!=self._dim):
+            data = x.transpose()
+            if(data.shape[1]!=self._dim):
+                raise ValueError('"x" doesn\'t have the right dimension even after transposition! The dim(x)='+str(x.shape)+'')
+        
+        # evaluate skew normal distribution
+        data = x - self._mu
+        pdf  = multivariate_normal( np.zeros_like(self._mu), self.Omega).logpdf( data )
+        cdf  = norm(0, 1).logcdf( data  @ self.alpha )
+        log_probability = np.log(2) + pdf + cdf
+        return log_probability
+
+
+    def rvs(self, size=1):
+        aCa      = self.alpha @ self.Omega @ self.alpha
+        delta    = (1 / np.sqrt(1 + aCa)) * self.Omega @ self.alpha
+        cov_star = np.block([[ np.ones(1),       delta ],
+                             [      delta,  self.Omega ]])
+        x        = multivariate_normal(np.zeros(self._dim+1), cov_star).rvs(size)
+        x0, x1   = x[:, 0], x[:, 1:]
+        inds     = x0 <= 0
+        x1[inds] = -1 * x1[inds]
+        return x1
