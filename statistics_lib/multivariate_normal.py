@@ -107,6 +107,7 @@ def multivariate_gaussian_skew(point, mean, Cov, shape):
 
 class multivariate_normal_skew:
     
+
     def __init__(self, mean, Cov, shape):
         # get the dimension
         self._dim = len(mean)
@@ -159,3 +160,45 @@ class multivariate_normal_skew:
         inds     = x0 <= 0
         x1[inds] = -1 * x1[inds]
         return x1
+    
+    def get_mode(self, init_x=None, dx_limit=1e-8, max_iter=10000):
+        
+        # initialize the initial guess
+        if(init_x is None):
+            init_x = self._mu
+        # prepare variables for 
+        x = init_x
+        dx_prev = 0.0
+        dx_new = 0.0
+        
+        eig_val_velocity = (np.linalg.norm( np.linalg.eig(self.Omega)[0] )**2) + 0.1
+        step_coeff = 1/eig_val_velocity
+        eig_vals = np.sqrt(np.linalg.eig(self.Cov)[0]**2)
+        
+        # loop through 
+        for idx in np.arange(0, max_iter):
+            d_dx = 2*multivariate_normal( np.zeros_like(self._mu), self.Omega).pdf(x) \
+                * ( ( ( -np.linalg.inv(self.Omega) @ x ) * norm(0, 1).cdf( self.alpha @ x ) )  + (norm(0, 1).pdf( x  @ self.alpha )*self.alpha ) ) 
+            
+            # stop search once the limit is hit
+            if(np.linalg.norm(d_dx, ord=2) < dx_limit ):
+                return x
+            
+            # assure none of the steps are larger than the eigenvalues squared of the Omega matrix
+            d_dx[np.abs(d_dx)>eig_vals] = (np.sign(d_dx)*eig_vals)[np.abs(d_dx)>eig_vals]
+            
+            # update dx_new
+            dx_new = d_dx * step_coeff
+            if idx > 0:
+                # gradient changed direction
+                if( ((np.sign(dx_new)-np.sign(dx_prev)) < 0.0).any() ):
+                    # make the step_coefficient smaller
+                    step_coeff = step_coeff/2.0
+                    # restart this step
+                    dx_new = 0
+
+            # update dx_prev (after the condition in gradient direction is checked)
+            dx_prev = dx_new
+            # update the x
+            x = x + dx_new
+        

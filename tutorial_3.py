@@ -21,7 +21,7 @@ from matplotlib.ticker import MaxNLocator
 ################################# USER INPUTS #################################
 ###############################################################################
 
-num_steps = 100
+num_steps = 1000
 
 # radius ~> xlim and ylim
 x_limits = [-5.1, 5.1]
@@ -31,8 +31,8 @@ y_limits = [-5.1, 5.1]
 cm_0 = cm.get_cmap('plasma')
 
 mean  = np.array(  [0.0, 0.0]  )
-# Cov   = np.array( [[0.002, 0.019], [0.019, 30.0]] )
-Cov   = np.array( [[3.0, 0.3], [0.3, 10.0]] )
+Cov   = np.array( [[0.002, 0.019], [0.019, 30.0]] )
+# Cov   = np.array( [[3.0, 0.3], [0.3, 10.0]] )
 shape = np.array(  [5.0, 1.0]  )
 
 # if True, then the results are saved as gifs (takes a while so requires patience)
@@ -116,7 +116,7 @@ for idx_x, x in enumerate(data):
     #     * ( ( norm(0, 1).cdf( x  @ alpha ) * ( -np.linalg.inv(Omega) @ x)  ) +  ( (norm(0, 1).pdf( x  @ alpha )**2) *( ( -x  @ alpha) * (-alpha) ) ) )
     
     d_dx = 2*multivariate_normal( np.zeros_like(mu), Omega).pdf(x) \
-        * ( ( ( -np.linalg.inv(Omega) @ x ) * norm(0, 1).cdf( alpha @ x ) )  + ( (norm(0, 1).pdf( x  @ alpha )*alpha ) ) )
+        * ( ( ( -np.linalg.inv(Omega) @ x ) * norm(0, 1).cdf( alpha @ x ) )  + ( (norm(0, 1).pdf( x  @ alpha ) * (alpha ) ) ) )
     
     # d_dx = 2*multivariate_normal( np.zeros_like(mu), Omega).pdf(x) \
     #     * ( ( ( -np.linalg.inv(Omega) @ x ) * norm(0, 1).cdf( alpha @ x ) )  + ( (norm(0, 1).pdf( x  @ alpha )*alpha ) )        
@@ -216,59 +216,45 @@ delta = lamb / np.sqrt(1+(lamb**2))
 Delta = np.diagflat( np.sqrt( 1-(delta**2) ) )
 Omega = Delta @ (Psi + np.outer(lamb, lamb.transpose())) @ Delta
 alpha = (lamb.transpose() @ np.linalg.inv(Psi) @ np.linalg.inv(Delta) ) / np.sqrt( 1 + (lamb.transpose() @ np.linalg.inv(Psi) @ lamb ) )
-# evaluate skew normal distribution
-# pdf  = multivariate_normal( np.zeros_like(mu), Omega).logpdf( point )
-# cdf  = norm(0, 1).logcdf( point  @ alpha )
-# probability = np.exp( np.log(2) + pdf + cdf )
 ###############################################################################
 
 #### initial guess at x (with zero-mean)
 
-x = mean + 0.1
+x = mean
 step_coeff = 1.0
 dx_prev = 0.0
 dx_new = 0.0
 
-eig_val_velocity = np.linalg.norm( np.linalg.eig(Omega)[0] )**2
+eig_val_velocity = np.linalg.norm( np.linalg.eig(Omega)[0] )**2 + 0.1
+eig_vals = np.sqrt(np.linalg.eig(Cov)[0]**2)
 
 for idx_step, step in enumerate(np.linspace(0,num_steps-1, num_steps)):
     # plot the contours of the distribution
     color_0 = cm_0( (step+1)/num_steps )
-    
-    pdf  = multivariate_normal( np.zeros_like(mu), Omega).logpdf( x )
-    cdf  = norm(0, 1).logcdf( x  @ alpha )
-    probability = np.exp( np.log(2) + pdf + cdf )    
-    
-    # d = 1.0 / eig_val_velocity
-    d = 2.0
-    
+
     d_dx = 2*multivariate_normal( np.zeros_like(mu), Omega).pdf(x) \
         * ( ( ( -np.linalg.inv(Omega) @ x ) * norm(0, 1).cdf( alpha @ x ) )  + ( (norm(0, 1).pdf( x  @ alpha )*alpha ) ) )    
       
+    # d_dx[np.abs(d_dx)>eig_vals] = (np.sign(d_dx)*eig_vals)[np.abs(d_dx)>eig_vals]
+    
+    # d = (1.0 / eig_val_velocity) * np.linalg.norm( np.abs( np.log( np.abs(d_dx)+0.0001 ) ) )
+    d = 1.0
     dx_new = d * d_dx * step_coeff
     
     if idx_step > 0:
-        if( ((np.sign(dx_new)-np.sign(dx_prev)) < 0.0).any() ):
+        if( ((np.sign(dx_new)-np.sign(dx_prev)) < 0.0).any() and step_coeff > 1e-6):
             step_coeff = step_coeff/2.0
+            # restart this step
+            dx_new = 0
     dx_prev = dx_new
     
     dx = dx_new
 
-    # d_dx = -2*multivariate_normal( np.zeros_like(mu), Omega).pdf(x) * ( -np.linalg.inv(Omega) @ x) * norm(0, 1).cdf( alpha @ x )
-    
-    # d_dx = -(1/5)*2*multivariate_normal( np.zeros_like(mu), Omega).pdf(x) \
-    #     * ( ( norm(0, 1).cdf( x  @ alpha ) * ( -np.linalg.inv(Omega) @ x) ) +  ( (norm(0, 1).pdf( x  @ alpha )**2) *( ( -x  @ alpha)  ) ) )
-
-    # d_dx = -2*multivariate_normal( np.zeros_like(mu), Omega).pdf(x) \
-    #     * ( ( norm(0, 1).cdf( x  @ alpha ) * ( -np.linalg.inv(Omega) @ x) * (-np.linalg.inv(Omega) @ np.ones_like(x))) +  ( norm(0, 1).pdf( x  @ alpha )*(( -x  @ alpha) * alpha ) ) )
-
-
-    # print(dx)
     # progress teh search
     x_t = x + dx
     
     # plot the step
-    ax2.plot( [x_t[0] ,x[0]] + mean[0], [x_t[1] ,x[1]] + mean[1], color=color_0, marker='.')
+    ax2.plot( [x_t[1] ,x[1]] + mean[1], [x_t[0] ,x[0]] + mean[0], color=color_0, marker='.')
     
     # plt.plot( [x_t[1] ,x[1]] + mean[1], [x_t[0] ,x[0]] + mean[0], color=color_0, marker='.')
     # close the loop
