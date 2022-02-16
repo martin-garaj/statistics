@@ -124,7 +124,7 @@ class multivariate_normal_skew:
         # calculate internal parameters
         self.delta = self._lamb / np.sqrt(1+(self._lamb**2))
         self.Delta = np.diagflat( np.sqrt( 1-(self.delta**2) ) )
-        self.Omega = self.Delta @ (self._Psi + np.outer(self._lamb, self.lamb.transpose())) @ self.Delta
+        self.Omega = self.Delta @ (self._Psi + np.outer(self._lamb, self._lamb.transpose())) @ self.Delta
         self.alpha = (self._lamb.transpose() @ np.linalg.inv(self._Psi) @ np.linalg.inv(self.Delta) ) \
             / np.sqrt( 1 + (self._lamb.transpose() @ np.linalg.inv(self._Psi) @ self._lamb ) )
         
@@ -134,16 +134,18 @@ class multivariate_normal_skew:
 
 
     def logpdf(self, x):
+        data = x
         # check dimension of x
-        if(len(x.shape)==1):
-            data = x.reshape(-1,self. _dim)
-        elif(x.shape[1]!=self._dim):
-            data = x.transpose()
-            if(data.shape[1]!=self._dim):
+        if(len(data.shape)==1):
+            data = data.reshape(self._dim,-1)
+        elif(x.shape[0]!=self._dim):
+            data = data.transpose()
+            if(data.shape[0]!=self._dim):
                 raise ValueError('"x" doesn\'t have the right dimension even after transposition! The dim(x)='+str(x.shape)+'')
         
         # evaluate skew normal distribution
-        data = x - self._mu
+        data = data - self._mu.reshape(self._dim,1)
+        data = data.transpose()
         pdf  = multivariate_normal( np.zeros_like(self._mu), self.Omega).logpdf( data )
         cdf  = norm(0, 1).logcdf( data  @ self.alpha )
         log_probability = np.log(2) + pdf + cdf
@@ -153,13 +155,36 @@ class multivariate_normal_skew:
     def rvs(self, size=1):
         aCa      = self.alpha @ self.Omega @ self.alpha
         delta    = (1 / np.sqrt(1 + aCa)) * self.Omega @ self.alpha
-        cov_star = np.block([[ np.ones(1),       delta ],
-                             [      delta,  self.Omega ]])
+        cov_star = np.block([[ np.ones(1)    ,       delta ],
+                             [ delta[:, None],  self.Omega ]])
         x        = multivariate_normal(np.zeros(self._dim+1), cov_star).rvs(size)
         x0, x1   = x[:, 0], x[:, 1:]
         inds     = x0 <= 0
         x1[inds] = -1 * x1[inds]
         return x1
+    
+    def get_dx(self, x):
+        data = x
+        # check dimension of x
+        if(len(data.shape)==1):
+            data = data.reshape(self._dim,-1)
+        elif(x.shape[0]!=self._dim):
+            data = data.transpose()
+            if(data.shape[0]!=self._dim):
+                raise ValueError('"x" doesn\'t have the right dimension even after transposition! The dim(x)='+str(x.shape)+'')
+        
+        # evaluate skew normal distribution
+        data = data - self._mu.reshape(self._dim,1)
+        # data = data.transpose()
+        
+        
+        dx = 2*multivariate_normal( np.zeros_like(self._mu), self.Omega).pdf(data.transpose()) \
+            * ( \
+                    ( ( -np.linalg.inv(self.Omega) @ data ) * norm(0, 1).cdf( self.alpha @ data ) ) \
+                  + ( (norm(0, 1).pdf( self.alpha @ data ) * ( self.alpha.reshape(self._dim,1) ) ) ) \
+              )
+
+        return dx.transpose()
     
     def get_mode(self, init_x=None, dx_limit=1e-8, max_iter=10000):
         
