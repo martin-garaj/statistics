@@ -35,8 +35,8 @@ boost = 1e-1
 cm_0 = cm.get_cmap('seismic')
 cm_1 = cm.get_cmap('plasma')
 
-model = { 0: {'mu':np.array([0.25, 1.0]), 'Sigma':np.array([ [0.0, 0.0],    [0.0, 0.0]]),    'skew':np.array([0.0, 0.0])},
-          1: {'mu':np.array([1.0, 1.0]), 'Sigma':np.array([ [0.03, 0.019], [0.019, 0.02]]),  'skew':np.array([0.0, 0.0])},
+model = { 0: {'mean':np.array([0.25, 1.0]), 'Cov':np.array([ [0.0, 0.0],    [0.0, 0.0]]),    'shape':np.array([0.4, 0.2])},
+          1: {'mean':np.array([1.0, 1.0]),  'Cov':np.array([ [0.03, 0.019], [0.019, 0.02]]), 'shape':np.array([-0.4, 0.5])},
           }
 
 # model = { 0: {'mu':np.array([-3.25, 1.0]), 'Sigma':np.array([ [0.0, 0.0],    [0.0, 0.0]]),    'skew':np.array([0.0, 0.0])},
@@ -47,7 +47,7 @@ model = { 0: {'mu':np.array([0.25, 1.0]), 'Sigma':np.array([ [0.0, 0.0],    [0.0
 # replace parking model by a rotated generative model
 # this enables to use the probability distributions as 
 # distance measure that creates a straight line 
-eig_vals, eig_vecs = np.linalg.eig( model[1]['Sigma'] )
+eig_vals, eig_vecs = np.linalg.eig( model[1]['Cov'] )
 # pick the major eigen-vector
 eig_vec_0 = eig_vecs[ :, eig_vals.argmax() ]
 rot_angle_0 = np.arctan2( eig_vec_0[0], eig_vec_0[1] )
@@ -62,7 +62,7 @@ rot_angle_data = ( rot_angle_data + np.pi ) if (rot_angle_data < -np.pi/2)  else
 c, s = np.cos(rot_angle_data), np.sin(rot_angle_data)
 R_data = np.array(((c, -s), (s, c)))
 # rorate Sigma_generative to align with 
-model[0]['Sigma'] = R_data @ model[1]['Sigma'] @ R_data.T
+model[0]['Cov'] = R_data @ model[1]['Cov'] @ R_data.T
 
 
 
@@ -87,15 +87,14 @@ feature_space = np.empty(XX.shape + (2,))
 feature_space[:, :, 0] = XX
 feature_space[:, :, 1] = YY
 
-
+feature_space_flat = np.array( [XX.flatten(), YY.flatten()] ).transpose()
 
 #%%############################################################################
 ############################ GENERATE IMAGES ############################
 ###############################################################################
 # for idx_mu0, mu0 in enumerate(np.append(np.linspace(0.2, 4.7, 3), np.linspace(4.7, 0.2, 3))):
-for idx_mu0, mu0 in enumerate( np.linspace(0.7, 0.2, 5) ):
-    model[0]['mu'][0] = mu0
-    # model[0]['skew'][0] = mu0
+for idx_mean0, mean0 in enumerate( np.linspace(3.5, -1.5, 30) ):
+    model[0]['mean'][1] = mean0
     
     plt.close('all')
     
@@ -113,24 +112,18 @@ for idx_mu0, mu0 in enumerate( np.linspace(0.7, 0.2, 5) ):
     for idx_name, name in enumerate(model):
     
         # get model parameters
-        mu = model[name]['mu']
-        Sigma = model[name]['Sigma']
-        skew = model[name]['skew']
+        mean = model[name]['mean']
+        Cov  = model[name]['Cov']
+        shape = model[name]['shape']
         
-        eig_vals, eig_vecs = np.linalg.eig(Sigma)
+        mns = st.multivariate_normal_skew(mean, Cov, shape)
     
-        color_0 = cm_0(0.1 + 0.8*((idx_name+1)/(len(model))) )
-        color_1 = cm_0(0.1 + 0.8*((idx_name+1)/(len(model))) )
+        # color_0 = cm_0(0.1 + 0.8*((idx_name+1)/(len(model))) )
+        # color_1 = cm_0(0.1 + 0.8*((idx_name+1)/(len(model))) )      
     
-        if(isinstance(skew, type(None))):
-            ZZ   = st.multivariate_gaussian(feature_space, mu, Sigma)
-            peak = st.multivariate_gaussian(mu, mu, Sigma)
-            print(skew)
-        else:
-            ZZ   = st.multivariate_gaussian_skew(feature_space, mu, Sigma, skew)
-            peak = st.multivariate_gaussian_skew(           mu, mu, Sigma, skew)
-            print(skew)
-            
+        ZZ   = mns.pdf(feature_space_flat).reshape(XX.shape[0], -1).T 
+        peak = ZZ.max()
+        
         # store the output
         ZZs[name] = ZZ/peak
         # results[name]['ZZ'] = ZZ
@@ -146,16 +139,6 @@ for idx_mu0, mu0 in enumerate( np.linspace(0.7, 0.2, 5) ):
         # add proxy for legend purposes
         # proxy = plt.Rectangle((0, 0), 1, 1, fc=color_0, label='covariance = '+name)
         # legend_proxy.append(proxy)
-        
-        # plot eigenvectors
-        ax0.quiver(
-            [mu[0], mu[1]], # <-- starting point of vector
-            eig_vecs[0,0]*eig_vals[0], eig_vecs[1,0]*eig_vals[0], # <-- directions of vector
-            color = 'black', alpha = .8, lw = 2)
-        ax0.quiver(
-            [mu[0], mu[1]], # <-- starting point of vector
-            eig_vecs[0,1]*eig_vals[1], eig_vecs[1,1]*eig_vals[1], # <-- directions of vector
-            color = 'black', alpha = .8, lw = 2)
         
     # add legend if necessary
     # proxy = plt.Rectangle((0, 0), 1, 1, fc='black', label='eigen-vector')
@@ -212,4 +195,4 @@ for idx_mu0, mu0 in enumerate( np.linspace(0.7, 0.2, 5) ):
     ############################## CREATE ANIMATION ###############################
     ###############################################################################
     if(animate):
-        plt.savefig('./graphics/distribution_overlap/tutorial_2_gif_'+str(idx_mu0)+'.png')
+        plt.savefig('./graphics/distribution_overlap/tutorial_2_gif_'+str(idx_mean0)+'.png')
