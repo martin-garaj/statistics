@@ -19,8 +19,8 @@ from matplotlib import cm
 num_steps = 1000
 
 # radius ~> xlim and ylim
-x_limits = [-5.1, 5.1]
-y_limits = [-5.1, 5.1]
+x_limits = [-6.1, 6.1]
+y_limits = [-6.1, 6.1]
 resolution = 10
 
 # select colormaps
@@ -83,20 +83,20 @@ norm_data = np.log( np.linalg.norm( DD, axis=0 )+1 )
 cset2 = ax2.contourf(XX, YY, norm_data, np.linspace(norm_data.min(), norm_data.max(), 40), zdir='z', offset=0, cmap=cm.coolwarm, alpha= 0.5)
 
 ax0.contour(XX, YY, ZZ,
-            np.linspace(0.1*peak, 0.9*peak, 3),
+            np.linspace(0.1*peak, 0.9*peak, 7),
             zdir='z',
             offset= [0],
             colors= 'gray',
             linestyles= 'dashed')
 ax1.contour(XX, YY, ZZ,
-            np.linspace(0.1*peak, 0.9*peak, 3),
+            np.linspace(0.1*peak, 0.9*peak, 7),
             zdir='z',
             offset= [0],
             colors= 'gray',
             linestyles= 'dashed')
 
 ax2.contour(XX, YY, ZZ,
-            np.linspace(0.1*peak, 0.99999*peak, 10),
+            np.linspace(0.1*peak, 0.9*peak, 7),
             zdir='z',
             offset= [0],
             colors= 'gray',
