@@ -203,7 +203,10 @@ class multivariate_normal_skew:
         # loop through 
         for idx in np.arange(0, max_iter):
             d_dx = 2*multivariate_normal( np.zeros_like(self._mu), self.Omega).pdf(x) \
-                * ( ( ( -np.linalg.inv(self.Omega) @ x ) * norm(0, 1).cdf( self.alpha @ x ) )  + (norm(0, 1).pdf( x  @ self.alpha )*self.alpha ) ) 
+                * ( \
+                       ( ( -np.linalg.inv(self.Omega) @ x ) * norm(0, 1).cdf( self.alpha @ x ) ) \
+                     + ( norm(0, 1).pdf( x  @ self.alpha ) * self.alpha ) \
+                  ) 
             
             # stop search once the limit is hit
             if(np.linalg.norm(d_dx, ord=2) < dx_limit ):
